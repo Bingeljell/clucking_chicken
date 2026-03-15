@@ -4,6 +4,10 @@ export class AudioInputController {
   private microphone: MediaStreamAudioSourceNode | null = null;
   private dataArray: Uint8Array | null = null;
   private isInitialized = false;
+  
+  // Calibration settings (persistent in memory, could be saved to localStorage)
+  private walkThreshold = 0.03;
+  private jumpThreshold = 0.12;
 
   public async initialize(): Promise<void> {
     if (this.isInitialized) return;
@@ -12,13 +16,21 @@ export class AudioInputController {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
       this.analyser = this.audioContext.createAnalyser();
-      this.analyser.fftSize = 256;
+      this.analyser.fftSize = 512; // Increased for better resolution
+      this.analyser.smoothingTimeConstant = 0.2; // Fast response for peaks
 
       this.microphone = this.audioContext.createMediaStreamSource(stream);
       this.microphone.connect(this.analyser);
 
       const bufferLength = this.analyser.frequencyBinCount;
       this.dataArray = new Uint8Array(bufferLength);
+      
+      // Load saved thresholds if any
+      const savedWalk = localStorage.getItem('frog_walk_threshold');
+      const savedJump = localStorage.getItem('frog_jump_threshold');
+      if (savedWalk) this.walkThreshold = parseFloat(savedWalk);
+      if (savedJump) this.jumpThreshold = parseFloat(savedJump);
+      
       this.isInitialized = true;
     } catch (error) {
       console.error('Error accessing microphone:', error);
@@ -29,7 +41,6 @@ export class AudioInputController {
   public getVolume(): number {
     if (!this.analyser || !this.dataArray) return 0;
 
-    // Use type assertion to avoid TS2345: Uint8Array<ArrayBufferLike> vs Uint8Array<ArrayBuffer>
     this.analyser.getByteTimeDomainData(this.dataArray as any);
 
     let sum = 0;
@@ -38,7 +49,18 @@ export class AudioInputController {
       sum += v * v;
     }
     const rms = Math.sqrt(sum / this.dataArray.length);
-    return rms; // Normalized volume value (0.0 to 1.0ish)
+    return rms;
+  }
+
+  public setThresholds(walk: number, jump: number): void {
+    this.walkThreshold = walk;
+    this.jumpThreshold = jump;
+    localStorage.setItem('frog_walk_threshold', walk.toString());
+    localStorage.setItem('frog_jump_threshold', jump.toString());
+  }
+
+  public getThresholds() {
+    return { walk: this.walkThreshold, jump: this.jumpThreshold };
   }
 
   public resume(): void {
@@ -48,5 +70,4 @@ export class AudioInputController {
   }
 }
 
-// Singleton instance
 export const audioController = new AudioInputController();

@@ -14,9 +14,9 @@ export class GameScene extends Phaser.Scene {
   private bgClouds!: Phaser.GameObjects.TileSprite;
   private bgMountains!: Phaser.GameObjects.TileSprite;
 
-  // Audio Thresholds
-  private readonly WALK_THRESHOLD = 0.03;
-  private readonly JUMP_THRESHOLD = 0.12;
+  // Audio settings from controller
+  private walkThreshold = 0.03;
+  private jumpThreshold = 0.12;
   private readonly MAX_VOLUME = 0.4;
   
   // Movement Constants
@@ -29,11 +29,13 @@ export class GameScene extends Phaser.Scene {
   }
 
   preload() {
-    // Correcting the path to the frog sprite sheet
     this.load.spritesheet('frog', 'assets/images/frog_sheet.png', { 
         frameWidth: 32, 
         frameHeight: 32 
     });
+    this.load.audio('jump_sfx', 'assets/audio/jump.wav');
+    this.load.audio('death_sfx', 'assets/audio/death.wav');
+    
     this.load.on('complete', () => {
       this.generateFallbackTextures();
     });
@@ -41,15 +43,12 @@ export class GameScene extends Phaser.Scene {
 
   private generateFallbackTextures() {
     const graphics = this.make.graphics({ x: 0, y: 0, add: false });
-    
-    // Cloud Layer
     graphics.fillStyle(0xFAD0C4, 0.5);
     graphics.fillCircle(50, 50, 40);
     graphics.fillCircle(80, 50, 30);
     graphics.generateTexture('bg_clouds', 128, 128);
     graphics.clear();
 
-    // Mountain Layer
     graphics.fillStyle(0xE27D60, 0.8);
     graphics.fillTriangle(0, 128, 64, 0, 128, 128);
     graphics.generateTexture('bg_mountains', 128, 128);
@@ -61,20 +60,22 @@ export class GameScene extends Phaser.Scene {
     this.score = 0;
     this.isDead = false;
 
+    // Get calibrated thresholds
+    const thresholds = audioController.getThresholds();
+    this.walkThreshold = thresholds.walk;
+    this.jumpThreshold = thresholds.jump;
+
     this.physics.world.setBounds(0, 0, worldWidth, height);
     this.cameras.main.setBounds(0, 0, worldWidth, height);
 
-    // Parallax Backgrounds
     this.bgClouds = this.add.tileSprite(0, 0, width, height, 'bg_clouds')
         .setOrigin(0).setScrollFactor(0).setAlpha(0.3);
     this.bgMountains = this.add.tileSprite(0, height - 128, width, 128, 'bg_mountains')
         .setOrigin(0).setScrollFactor(0).setAlpha(0.5);
 
-    // Lava (Sunset Glow: Burgundy) - Positioning relative to floor
     const lavaHeight = 40;
     this.add.rectangle(worldWidth / 2, height - lavaHeight / 2, worldWidth, lavaHeight, 0x8E2800).setOrigin(0.5);
 
-    // UI
     this.volumeText = this.add.text(16, 50, 'Volume: 0', { fontSize: '18px', color: '#8E2800' }).setScrollFactor(0);
     this.scoreText = this.add.text(16, 80, 'Score: 0', { fontSize: '24px', color: '#8E2800' }).setScrollFactor(0);
     
@@ -83,7 +84,6 @@ export class GameScene extends Phaser.Scene {
 
     this.createLevel(worldWidth, height);
 
-    // Animations
     if (!this.anims.exists('idle')) {
         this.anims.create({ key: 'idle', frames: this.anims.generateFrameNumbers('frog', { start: 0, end: 1 }), frameRate: 4, repeat: -1 });
         this.anims.create({ key: 'walk', frames: this.anims.generateFrameNumbers('frog', { start: 4, end: 7 }), frameRate: 10, repeat: -1 });
@@ -91,14 +91,12 @@ export class GameScene extends Phaser.Scene {
         this.anims.create({ key: 'die', frames: this.anims.generateFrameNumbers('frog', { start: 12, end: 15 }), frameRate: 10, repeat: 0 });
     }
 
-    // Player - Drop from the top for a dramatic entrance!
     this.player = this.physics.add.sprite(100, -100, 'frog');
     this.player.setCollideWorldBounds(true);
     this.player.setGravityY(1400);
     this.player.setScale(2);
 
     this.physics.add.collider(this.player, this.platforms);
-    // Use overlap instead of collider for hazards to ensure death is triggered immediately
     this.physics.add.overlap(this.player, this.hazards, this.handleGameOver, undefined, this);
 
     this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
@@ -106,20 +104,15 @@ export class GameScene extends Phaser.Scene {
 
   private createLevel(worldWidth: number, height: number) {
     const floorY = height - 120;
-    
     let x = 0;
     while (x < worldWidth) {
-        // Ensure the first platform is wide and at a stable height
         const isFirst = x === 0;
         const platWidth = isFirst ? 800 : Phaser.Math.Between(300, 600);
         const platY = isFirst ? floorY : floorY - Phaser.Math.Between(-50, 150);
-        
         this.addPlatform(x, platY, platWidth);
-        
         if (!isFirst && x > 500 && Phaser.Math.Between(0, 10) > 6) {
             this.addHazard(x + platWidth / 2, platY - 30);
         }
-
         x += platWidth + Phaser.Math.Between(100, 200);
     }
   }
@@ -145,14 +138,15 @@ export class GameScene extends Phaser.Scene {
 
     this.player.setVelocityX(0);
 
-    if (volume > this.JUMP_THRESHOLD && this.player.body?.blocked.down) {
-      const range = this.MAX_VOLUME - this.JUMP_THRESHOLD;
-      const normalizedVolume = Math.min(Math.max((volume - this.JUMP_THRESHOLD) / range, 0), 1);
+    if (volume > this.jumpThreshold && this.player.body?.blocked.down) {
+      const range = this.MAX_VOLUME - this.jumpThreshold;
+      const normalizedVolume = Math.min(Math.max((volume - this.jumpThreshold) / range, 0), 1);
       const jumpForce = this.MIN_JUMP_FORCE + (this.MAX_JUMP_FORCE - this.MIN_JUMP_FORCE) * normalizedVolume;
       
       this.player.setVelocityY(jumpForce);
       this.player.play('jump', true);
-    } else if (volume > this.WALK_THRESHOLD) {
+      this.sound.play('jump_sfx', { volume: 0.5 });
+    } else if (volume > this.walkThreshold) {
       this.player.setVelocityX(this.HORIZONTAL_SPEED);
       if (this.player.body?.blocked.down) {
         this.player.play('walk', true);
@@ -169,7 +163,6 @@ export class GameScene extends Phaser.Scene {
         }
     }
 
-    // Death detection for falling into lava
     if (this.player.y > this.scale.height - 50) {
       this.handleGameOver();
     }
@@ -181,13 +174,13 @@ export class GameScene extends Phaser.Scene {
     if (this.isDead) return;
     this.isDead = true;
     
-    // Stop physics
     if (this.player.body) {
         this.player.body.enable = false;
     }
     
     this.player.setVelocity(0, 0);
     this.player.play('die', true);
+    this.sound.play('death_sfx', { volume: 0.6 });
     
     this.time.delayedCall(800, () => {
         this.scene.start('GameOverScene', { score: this.score });
