@@ -29,18 +29,17 @@ export class GameScene extends Phaser.Scene {
   }
 
   preload() {
+    // Correcting the path to the frog sprite sheet
     this.load.spritesheet('frog', 'assets/images/frog_sheet.png', { 
         frameWidth: 32, 
         frameHeight: 32 
     });
-    // Temporary gradient background generation if images are missing
     this.load.on('complete', () => {
       this.generateFallbackTextures();
     });
   }
 
   private generateFallbackTextures() {
-    // Creating procedural parallax layers if images aren't found
     const graphics = this.make.graphics({ x: 0, y: 0, add: false });
     
     // Cloud Layer
@@ -71,8 +70,9 @@ export class GameScene extends Phaser.Scene {
     this.bgMountains = this.add.tileSprite(0, height - 128, width, 128, 'bg_mountains')
         .setOrigin(0).setScrollFactor(0).setAlpha(0.5);
 
-    // Lava (Sunset Glow: Burgundy)
-    this.add.rectangle(worldWidth / 2, height - 10, worldWidth, 20, 0x8E2800).setOrigin(0.5);
+    // Lava (Sunset Glow: Burgundy) - Positioning relative to floor
+    const lavaHeight = 40;
+    this.add.rectangle(worldWidth / 2, height - lavaHeight / 2, worldWidth, lavaHeight, 0x8E2800).setOrigin(0.5);
 
     // UI
     this.volumeText = this.add.text(16, 50, 'Volume: 0', { fontSize: '18px', color: '#8E2800' }).setScrollFactor(0);
@@ -95,18 +95,18 @@ export class GameScene extends Phaser.Scene {
     this.player = this.physics.add.sprite(100, height - 200, 'frog');
     this.player.setCollideWorldBounds(true);
     this.player.setGravityY(1400);
-    this.player.setScale(2); // Slightly bigger for mobile
+    this.player.setScale(2);
 
     this.physics.add.collider(this.player, this.platforms);
-    this.physics.add.collider(this.player, this.hazards, this.handleGameOver, undefined, this);
+    // Use overlap instead of collider for hazards to ensure death is triggered immediately
+    this.physics.add.overlap(this.player, this.hazards, this.handleGameOver, undefined, this);
 
     this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
   }
 
   private createLevel(worldWidth: number, height: number) {
-    const floorY = height - 100;
+    const floorY = height - 120;
     
-    // Dynamic level generation with gaps
     let x = 0;
     while (x < worldWidth) {
         const platWidth = Phaser.Math.Between(300, 600);
@@ -114,12 +114,11 @@ export class GameScene extends Phaser.Scene {
         
         this.addPlatform(x, platY, platWidth);
         
-        // Random hazard
         if (x > 500 && Phaser.Math.Between(0, 10) > 6) {
             this.addHazard(x + platWidth / 2, platY - 30);
         }
 
-        x += platWidth + Phaser.Math.Between(100, 200); // The Gaps
+        x += platWidth + Phaser.Math.Between(100, 200);
     }
   }
 
@@ -139,7 +138,6 @@ export class GameScene extends Phaser.Scene {
     const volume = audioController.getVolume();
     this.volumeText.setText(`Volume: ${volume.toFixed(4)}`);
 
-    // Parallax move
     this.bgClouds.tilePositionX = this.cameras.main.scrollX * 0.1;
     this.bgMountains.tilePositionX = this.cameras.main.scrollX * 0.3;
 
@@ -169,7 +167,8 @@ export class GameScene extends Phaser.Scene {
         }
     }
 
-    if (this.player.y > this.scale.height - 30) {
+    // Death detection for falling into lava
+    if (this.player.y > this.scale.height - 50) {
       this.handleGameOver();
     }
     
@@ -179,8 +178,15 @@ export class GameScene extends Phaser.Scene {
   private handleGameOver() {
     if (this.isDead) return;
     this.isDead = true;
+    
+    // Stop physics
+    if (this.player.body) {
+        this.player.body.enable = false;
+    }
+    
     this.player.setVelocity(0, 0);
     this.player.play('die', true);
+    
     this.time.delayedCall(800, () => {
         this.scene.start('GameOverScene', { score: this.score });
     });

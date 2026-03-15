@@ -14,42 +14,50 @@ export class StartScene extends Phaser.Scene {
     // Background (Sunset Glow: Sand)
     this.add.rectangle(width / 2, height / 2, width, height, 0xFDF6E3);
 
-    // Title
-    this.add.text(width / 2, height * 0.25, 'Frog Squawk', { 
-      fontSize: '64px', 
+    // Title - Responsive sizing
+    const titleSize = Math.min(width * 0.12, 64);
+    this.add.text(width / 2, height * 0.2, 'Frog Leap', { 
+      fontSize: `${titleSize}px`, 
       color: '#E27D60',
       fontStyle: 'bold'
     }).setOrigin(0.5);
 
-    // Instructions Box
-    const instructionBox = this.add.rectangle(width / 2, height * 0.5, Math.min(width * 0.8, 600), 200, 0xFAD0C4);
+    // Instructions Box - Responsive sizing
+    const boxWidth = Math.min(width * 0.9, 600);
+    const boxHeight = Math.min(height * 0.4, 300);
+    this.add.rectangle(width / 2, height * 0.5, boxWidth, boxHeight, 0xFAD0C4);
     
     const instructions = [
       '🐸 Use your voice to control the frog!',
-      '🚶 Soft sounds (Hum/Cluck) to WALK',
-      '🚀 Loud Squawks to JUMP higher',
-      '🌊 Watch out for the gaps and hazards!'
+      '',
+      '🚶 Soft sounds (Hum/Ribbit) to WALK',
+      '🚀 Loud CROAKS to JUMP higher',
+      '🌊 Watch out for gaps and hazards!'
     ];
 
+    const instructionSize = Math.min(width * 0.05, 24);
     this.add.text(width / 2, height * 0.5, instructions.join('\n'), {
-      fontSize: '24px',
+      fontSize: `${instructionSize}px`,
       color: '#8E2800',
       align: 'center',
-      lineSpacing: 10
+      lineSpacing: 8,
+      wordWrap: { width: boxWidth - 40 }
     }).setOrigin(0.5);
 
-    // Start Button
-    const startBtn = this.add.rectangle(width / 2, height * 0.75, 250, 60, 0xE27D60)
+    // Start Button - Responsive sizing
+    const btnWidth = Math.min(width * 0.6, 300);
+    const btnHeight = Math.min(height * 0.1, 70);
+    const startBtn = this.add.rectangle(width / 2, height * 0.8, btnWidth, btnHeight, 0xE27D60)
       .setInteractive({ useHandCursor: true });
     
-    this.add.text(width / 2, height * 0.75, 'START GAME', {
-      fontSize: '32px',
+    this.add.text(width / 2, height * 0.8, 'START GAME', {
+      fontSize: `${instructionSize * 1.2}px`,
       color: '#FDF6E3',
       fontStyle: 'bold'
     }).setOrigin(0.5);
 
-    this.statusText = this.add.text(width / 2, height * 0.85, '', { 
-      fontSize: '18px', 
+    this.statusText = this.add.text(width / 2, height * 0.92, '', { 
+      fontSize: `${instructionSize * 0.7}px`, 
       color: '#8E2800' 
     }).setOrigin(0.5);
 
