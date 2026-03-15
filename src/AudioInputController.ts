@@ -80,6 +80,15 @@ export class AudioInputController {
     localStorage.setItem('frog_input_gain', gain.toString());
   }
 
+  public getThresholds() {
+    return {
+      walk: this.walkThreshold,
+      jump: this.jumpThreshold,
+      noise: this.noiseFloor,
+      gain: this.inputGain
+    };
+  }
+
   public resume(): void {
     if (this.audioContext && this.audioContext.state === 'suspended') {
       this.audioContext.resume();
