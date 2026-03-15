@@ -76,9 +76,20 @@ export class GameScene extends Phaser.Scene {
     const lavaHeight = 40;
     this.add.rectangle(worldWidth / 2, height - lavaHeight / 2, worldWidth, lavaHeight, 0x8E2800).setOrigin(0.5);
 
-    this.volumeText = this.add.text(16, 50, 'Volume: 0', { fontSize: '18px', color: '#8E2800' }).setScrollFactor(0);
-    this.scoreText = this.add.text(16, 80, 'Score: 0', { fontSize: '24px', color: '#8E2800' }).setScrollFactor(0);
+    // UI
+    this.volumeText = this.add.text(16, 16, 'Vol: 0', { fontSize: '18px', color: '#8E2800' }).setScrollFactor(0);
+    this.scoreText = this.add.text(16, 46, 'Score: 0', { fontSize: '24px', color: '#8E2800' }).setScrollFactor(0);
     
+    // Menu/Settings Button (Top Right)
+    const menuBtn = this.add.rectangle(width - 60, 30, 80, 40, 0xE27D60)
+        .setScrollFactor(0).setInteractive({ useHandCursor: true });
+    this.add.text(width - 60, 30, 'MENU', { fontSize: '18px', color: '#FDF6E3', fontStyle: 'bold' })
+        .setScrollFactor(0).setOrigin(0.5);
+
+    menuBtn.on('pointerdown', () => {
+        this.scene.start('StartScene');
+    });
+
     this.platforms = this.physics.add.staticGroup();
     this.hazards = this.physics.add.staticGroup();
 
@@ -131,7 +142,7 @@ export class GameScene extends Phaser.Scene {
     if (this.isDead) return;
 
     const volume = audioController.getVolume();
-    this.volumeText.setText(`Volume: ${volume.toFixed(4)}`);
+    this.volumeText.setText(`Vol: ${volume.toFixed(4)}`);
 
     this.bgClouds.tilePositionX = this.cameras.main.scrollX * 0.1;
     this.bgMountains.tilePositionX = this.cameras.main.scrollX * 0.3;

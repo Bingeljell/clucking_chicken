@@ -8,3 +8,4 @@
 - **2026-03-15** > src/scenes/{GameScene.ts, GameOverScene.ts}, vite.config.ts > Finalized scoring system and score passing between scenes. Polished PWA manifest with "Sunset Glow" theme colors. Verified build compilation.
 - **2026-03-15** > src/scenes/GameScene.ts > Migrated from scrolling scene to a platformer-style level with platforms, gaps, and a "Lava" death zone. Implemented dynamic jump scaling where the jump force is proportional to the microphone volume spike. Added camera follow system to support long levels.
 - **2026-03-15** > src/scenes/GameScene.ts > Fixed initialization order bug where hazards were being added to an undefined group during level creation.
+- **2026-03-15** > src/AudioInputController.ts, src/scenes/StartScene.ts, src/scenes/GameScene.ts > Implemented a multi-step calibration system (Noise floor, Walk peak, Jump peak) and added a MENU button in GameScene to escape to the main menu.

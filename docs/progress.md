@@ -16,8 +16,10 @@
 - [x] Add Parallax background layers (Clouds, Mountains)
 - [x] Implement responsive UI for all screen sizes
 - [x] Fix death detection logic (overlap vs collider)
+- [x] Multi-step calibration system (Noise, Walk, Jump)
+- [x] Menu/Escape button in GameScene
 
 ## Next Steps
-- [ ] Implement audio calibration settings
 - [ ] Add background ambient music
 - [ ] Create more diverse level hazards (moving spikes, etc.)
+- [ ] Implement a "Tutorial" or Level 1 with clear signposting
