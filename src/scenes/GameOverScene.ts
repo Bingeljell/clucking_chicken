@@ -10,7 +10,6 @@ export class GameOverScene extends Phaser.Scene {
   init(data: { score: number }) {
     this.finalScore = data.score || 0;
     
-    // Handle High Score in LocalStorage
     const savedHighScore = localStorage.getItem('clucking_high_score');
     const highScore = savedHighScore ? parseInt(savedHighScore) : 0;
     
@@ -20,15 +19,42 @@ export class GameOverScene extends Phaser.Scene {
   }
 
   create() {
+    const { width, height } = this.scale;
     const highScore = localStorage.getItem('clucking_high_score') || '0';
     
-    this.add.text(400, 150, 'Game Over', { fontSize: '48px', color: '#8E2800' }).setOrigin(0.5);
-    this.add.text(400, 250, `Final Score: ${this.finalScore}`, { fontSize: '32px', color: '#E27D60' }).setOrigin(0.5);
-    this.add.text(400, 310, `Best: ${highScore}`, { fontSize: '24px', color: '#8E2800' }).setOrigin(0.5);
-    this.add.text(400, 450, 'Click to Restart', { fontSize: '24px', color: '#8E2800' }).setOrigin(0.5);
+    // Background
+    this.add.rectangle(width / 2, height / 2, width, height, 0x8E2800);
 
-    this.input.once('pointerdown', () => {
+    this.add.text(width / 2, height * 0.25, 'GAME OVER', { 
+      fontSize: '64px', 
+      color: '#FAD0C4',
+      fontStyle: 'bold'
+    }).setOrigin(0.5);
+
+    this.add.text(width / 2, height * 0.45, `SCORE: ${this.finalScore}`, { 
+      fontSize: '40px', 
+      color: '#FDF6E3' 
+    }).setOrigin(0.5);
+
+    this.add.text(width / 2, height * 0.55, `BEST: ${highScore}`, { 
+      fontSize: '24px', 
+      color: '#E27D60' 
+    }).setOrigin(0.5);
+
+    const restartBtn = this.add.rectangle(width / 2, height * 0.75, 250, 60, 0xE27D60)
+      .setInteractive({ useHandCursor: true });
+    
+    this.add.text(width / 2, height * 0.75, 'RETRY', {
+      fontSize: '32px',
+      color: '#FDF6E3',
+      fontStyle: 'bold'
+    }).setOrigin(0.5);
+
+    restartBtn.on('pointerdown', () => {
       this.scene.start('GameScene');
     });
+
+    restartBtn.on('pointerover', () => restartBtn.setFillStyle(0xFAD0C4));
+    restartBtn.on('pointerout', () => restartBtn.setFillStyle(0xE27D60));
   }
 }

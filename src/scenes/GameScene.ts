@@ -10,6 +10,10 @@ export class GameScene extends Phaser.Scene {
   private score = 0;
   private isDead = false;
   
+  // Parallax layers
+  private bgClouds!: Phaser.GameObjects.TileSprite;
+  private bgMountains!: Phaser.GameObjects.TileSprite;
+
   // Audio Thresholds
   private readonly WALK_THRESHOLD = 0.03;
   private readonly JUMP_THRESHOLD = 0.12;
@@ -25,74 +29,73 @@ export class GameScene extends Phaser.Scene {
   }
 
   preload() {
-    // Load the frog sprite sheet (assuming 32x32 based on your requirement)
-    // Looking at the grid, it's 4 columns by 4 rows.
     this.load.spritesheet('frog', 'assets/images/frog_sheet.png', { 
         frameWidth: 32, 
-        frameHeight: 32,
-        margin: 0,
-        spacing: 0
+        frameHeight: 32 
+    });
+    // Temporary gradient background generation if images are missing
+    this.load.on('complete', () => {
+      this.generateFallbackTextures();
     });
   }
 
+  private generateFallbackTextures() {
+    // Creating procedural parallax layers if images aren't found
+    const graphics = this.make.graphics({ x: 0, y: 0, add: false });
+    
+    // Cloud Layer
+    graphics.fillStyle(0xFAD0C4, 0.5);
+    graphics.fillCircle(50, 50, 40);
+    graphics.fillCircle(80, 50, 30);
+    graphics.generateTexture('bg_clouds', 128, 128);
+    graphics.clear();
+
+    // Mountain Layer
+    graphics.fillStyle(0xE27D60, 0.8);
+    graphics.fillTriangle(0, 128, 64, 0, 128, 128);
+    graphics.generateTexture('bg_mountains', 128, 128);
+  }
+
   create() {
+    const { width, height } = this.scale;
+    const worldWidth = 6000;
     this.score = 0;
     this.isDead = false;
-    const worldWidth = 4000;
-    const worldHeight = 600;
 
-    this.physics.world.setBounds(0, 0, worldWidth, worldHeight);
-    this.cameras.main.setBounds(0, 0, worldWidth, worldHeight);
+    this.physics.world.setBounds(0, 0, worldWidth, height);
+    this.cameras.main.setBounds(0, 0, worldWidth, height);
 
-    // Background / Lava
-    this.add.rectangle(worldWidth / 2, 590, worldWidth, 20, 0x8E2800).setOrigin(0.5);
+    // Parallax Backgrounds
+    this.bgClouds = this.add.tileSprite(0, 0, width, height, 'bg_clouds')
+        .setOrigin(0).setScrollFactor(0).setAlpha(0.3);
+    this.bgMountains = this.add.tileSprite(0, height - 128, width, 128, 'bg_mountains')
+        .setOrigin(0).setScrollFactor(0).setAlpha(0.5);
 
+    // Lava (Sunset Glow: Burgundy)
+    this.add.rectangle(worldWidth / 2, height - 10, worldWidth, 20, 0x8E2800).setOrigin(0.5);
+
+    // UI
     this.volumeText = this.add.text(16, 50, 'Volume: 0', { fontSize: '18px', color: '#8E2800' }).setScrollFactor(0);
     this.scoreText = this.add.text(16, 80, 'Score: 0', { fontSize: '24px', color: '#8E2800' }).setScrollFactor(0);
     
     this.platforms = this.physics.add.staticGroup();
     this.hazards = this.physics.add.staticGroup();
 
-    this.createLevel(worldWidth);
+    this.createLevel(worldWidth, height);
 
-    // Animations based on your description:
-    // Row 0: Idle (2 frames)
-    this.anims.create({
-      key: 'idle',
-      frames: this.anims.generateFrameNumbers('frog', { start: 0, end: 1 }),
-      frameRate: 4,
-      repeat: -1
-    });
+    // Animations
+    if (!this.anims.exists('idle')) {
+        this.anims.create({ key: 'idle', frames: this.anims.generateFrameNumbers('frog', { start: 0, end: 1 }), frameRate: 4, repeat: -1 });
+        this.anims.create({ key: 'walk', frames: this.anims.generateFrameNumbers('frog', { start: 4, end: 7 }), frameRate: 10, repeat: -1 });
+        this.anims.create({ key: 'jump', frames: this.anims.generateFrameNumbers('frog', { start: 8, end: 11 }), frameRate: 10, repeat: 0 });
+        this.anims.create({ key: 'die', frames: this.anims.generateFrameNumbers('frog', { start: 12, end: 15 }), frameRate: 10, repeat: 0 });
+    }
 
-    // Row 1: Walk (4 frames)
-    this.anims.create({
-      key: 'walk',
-      frames: this.anims.generateFrameNumbers('frog', { start: 4, end: 7 }),
-      frameRate: 10,
-      repeat: -1
-    });
-
-    // Row 2: Jump (4 frames)
-    this.anims.create({
-      key: 'jump',
-      frames: this.anims.generateFrameNumbers('frog', { start: 8, end: 11 }),
-      frameRate: 10,
-      repeat: 0
-    });
-
-    // Row 3: Death (4 frames)
-    this.anims.create({
-      key: 'die',
-      frames: this.anims.generateFrameNumbers('frog', { start: 12, end: 15 }),
-      frameRate: 10,
-      repeat: 0
-    });
-
-    // Create Player Sprite
-    this.player = this.physics.add.sprite(100, 450, 'frog');
+    // Player
+    this.player = this.physics.add.sprite(100, height - 200, 'frog');
     this.player.setCollideWorldBounds(true);
     this.player.setGravityY(1400);
-    this.player.setScale(1.5); // Making the 32x32 sprite a bit bigger for better visibility
+    this.player.setScale(2); // Slightly bigger for mobile
 
     this.physics.add.collider(this.player, this.platforms);
     this.physics.add.collider(this.player, this.hazards, this.handleGameOver, undefined, this);
@@ -100,18 +103,24 @@ export class GameScene extends Phaser.Scene {
     this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
   }
 
-  private createLevel(worldWidth: number) {
-    this.addPlatform(0, 500, 500);
-    this.addPlatform(600, 500, 300);
-    this.addPlatform(1000, 400, 300);
-    this.addPlatform(1400, 400, 400);
-    this.addHazard(1600, 370);
-    this.addPlatform(1900, 300, 300);
-    this.addPlatform(2300, 500, 500);
-    this.addPlatform(2900, 400, 400);
-    this.addHazard(3000, 370);
-    this.addHazard(3200, 370);
-    this.addPlatform(3400, 500, 600);
+  private createLevel(worldWidth: number, height: number) {
+    const floorY = height - 100;
+    
+    // Dynamic level generation with gaps
+    let x = 0;
+    while (x < worldWidth) {
+        const platWidth = Phaser.Math.Between(300, 600);
+        const platY = floorY - Phaser.Math.Between(-50, 150);
+        
+        this.addPlatform(x, platY, platWidth);
+        
+        // Random hazard
+        if (x > 500 && Phaser.Math.Between(0, 10) > 6) {
+            this.addHazard(x + platWidth / 2, platY - 30);
+        }
+
+        x += platWidth + Phaser.Math.Between(100, 200); // The Gaps
+    }
   }
 
   private addPlatform(x: number, y: number, width: number) {
@@ -129,6 +138,10 @@ export class GameScene extends Phaser.Scene {
 
     const volume = audioController.getVolume();
     this.volumeText.setText(`Volume: ${volume.toFixed(4)}`);
+
+    // Parallax move
+    this.bgClouds.tilePositionX = this.cameras.main.scrollX * 0.1;
+    this.bgMountains.tilePositionX = this.cameras.main.scrollX * 0.3;
 
     this.player.setVelocityX(0);
 
@@ -156,7 +169,7 @@ export class GameScene extends Phaser.Scene {
         }
     }
 
-    if (this.player.y > 570) {
+    if (this.player.y > this.scale.height - 30) {
       this.handleGameOver();
     }
     
@@ -166,11 +179,8 @@ export class GameScene extends Phaser.Scene {
   private handleGameOver() {
     if (this.isDead) return;
     this.isDead = true;
-    
     this.player.setVelocity(0, 0);
     this.player.play('die', true);
-    
-    // Delay scene transition to allow death animation to play
     this.time.delayedCall(800, () => {
         this.scene.start('GameOverScene', { score: this.score });
     });
