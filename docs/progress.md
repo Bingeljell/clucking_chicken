@@ -13,8 +13,10 @@
 - [x] Implement dynamic jump scaling (Loudness = Height)
 - [x] Integrate camera follow system
 
-## Phase 3: Hazards & Level Polish
+## Phase 3: Hazards & Level Polish (Completed)
 - [x] Add static hazards on platforms
 - [x] Refine physics and gravity for platforming
+- [x] Integrate frog sprite sheet with idle, walk, jump, and die animations
+- [x] Implement death animation delay before Game Over
 - [ ] Add more complex level segments
 - [ ] UI improvements (Calibration/Settings)
