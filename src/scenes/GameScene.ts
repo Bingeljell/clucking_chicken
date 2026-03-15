@@ -91,8 +91,8 @@ export class GameScene extends Phaser.Scene {
         this.anims.create({ key: 'die', frames: this.anims.generateFrameNumbers('frog', { start: 12, end: 15 }), frameRate: 10, repeat: 0 });
     }
 
-    // Player
-    this.player = this.physics.add.sprite(100, height - 200, 'frog');
+    // Player - Drop from the top for a dramatic entrance!
+    this.player = this.physics.add.sprite(100, -100, 'frog');
     this.player.setCollideWorldBounds(true);
     this.player.setGravityY(1400);
     this.player.setScale(2);
@@ -109,12 +109,14 @@ export class GameScene extends Phaser.Scene {
     
     let x = 0;
     while (x < worldWidth) {
-        const platWidth = Phaser.Math.Between(300, 600);
-        const platY = floorY - Phaser.Math.Between(-50, 150);
+        // Ensure the first platform is wide and at a stable height
+        const isFirst = x === 0;
+        const platWidth = isFirst ? 800 : Phaser.Math.Between(300, 600);
+        const platY = isFirst ? floorY : floorY - Phaser.Math.Between(-50, 150);
         
         this.addPlatform(x, platY, platWidth);
         
-        if (x > 500 && Phaser.Math.Between(0, 10) > 6) {
+        if (!isFirst && x > 500 && Phaser.Math.Between(0, 10) > 6) {
             this.addHazard(x + platWidth / 2, platY - 30);
         }
 
