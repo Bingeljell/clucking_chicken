@@ -10,14 +10,14 @@ export class GameScene extends Phaser.Scene {
   private score = 0;
   
   // Audio Thresholds
-  private readonly WALK_THRESHOLD = 0.05;
-  private readonly JUMP_THRESHOLD = 0.15;
-  private readonly MAX_VOLUME = 0.6; // Cap for volume mapping
+  private readonly WALK_THRESHOLD = 0.03; // More sensitive walk
+  private readonly JUMP_THRESHOLD = 0.12; // More sensitive jump
+  private readonly MAX_VOLUME = 0.4; // Lower cap for easier max jumps
   
   // Movement Constants
-  private readonly HORIZONTAL_SPEED = 200;
-  private readonly MIN_JUMP_FORCE = -350;
-  private readonly MAX_JUMP_FORCE = -850;
+  private readonly HORIZONTAL_SPEED = 250; // Faster movement to bridge gaps
+  private readonly MIN_JUMP_FORCE = -400; // Stronger base jump
+  private readonly MAX_JUMP_FORCE = -950; // Stronger max jump
 
   constructor() {
     super('GameScene');
@@ -25,7 +25,7 @@ export class GameScene extends Phaser.Scene {
 
   create() {
     this.score = 0;
-    const worldWidth = 3000;
+    const worldWidth = 4000; // Slightly longer level
     const worldHeight = 600;
 
     // Set world and camera bounds
@@ -50,7 +50,7 @@ export class GameScene extends Phaser.Scene {
     this.physics.add.existing(this.player);
     const body = this.player.body as Phaser.Physics.Arcade.Body;
     body.setCollideWorldBounds(true);
-    body.setGravityY(1200); // Higher gravity for snappier platforming
+    body.setGravityY(1400); // Slightly higher gravity for tighter control
 
     // Colliders
     this.physics.add.collider(this.player, this.platforms);
@@ -62,24 +62,24 @@ export class GameScene extends Phaser.Scene {
 
   private createLevel(worldWidth: number) {
     // Starting platform
-    this.addPlatform(0, 500, 400);
+    this.addPlatform(0, 500, 500);
 
-    // Sequence of platforms and gaps
-    this.addPlatform(550, 500, 200);
-    this.addPlatform(850, 400, 200); // Step up
-    this.addPlatform(1150, 400, 300);
+    // Sequence of platforms and gaps (Gaps reduced to 100-150px)
+    this.addPlatform(600, 500, 300);
+    this.addPlatform(1000, 400, 300); // Step up
+    this.addPlatform(1400, 400, 400);
     
     // Add a hazard on this platform
-    this.addHazard(1300, 370);
+    this.addHazard(1600, 370);
 
-    this.addPlatform(1550, 300, 200); // Step up again
-    this.addPlatform(1850, 500, 400); // Big drop
+    this.addPlatform(1900, 300, 300); // Step up again
+    this.addPlatform(2300, 500, 500); // Drop
     
-    this.addPlatform(2350, 400, 300);
-    this.addHazard(2450, 370);
-    this.addHazard(2550, 370);
+    this.addPlatform(2900, 400, 400);
+    this.addHazard(3000, 370);
+    this.addHazard(3200, 370);
 
-    this.addPlatform(2750, 500, 500); // Final stretch
+    this.addPlatform(3400, 500, 600); // Final stretch
   }
 
   private addPlatform(x: number, y: number, width: number) {
