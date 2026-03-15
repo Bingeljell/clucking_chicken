@@ -7,8 +7,8 @@
 - [x] Initial documentation update
 
 ## Phase 2: Game Architecture & Scene Scaffolding
-- [ ] Create Phaser game config
-- [ ] Scaffolding Start, Game, and GameOver scenes
+- [x] Create Phaser game config
+- [x] Scaffolding Start, Game, and GameOver scenes
 
 ## Phase 3: Audio Input Module
 - [ ] Implement AudioInputController
