@@ -15,9 +15,9 @@
 - [x] Microphone access request flow
 
 ## Phase 4: Core Game Loop - Movement & Physics
-- [ ] Placeholder assets
-- [ ] Player sprite and gravity
-- [ ] Voice-to-Movement mapping
+- [x] Placeholder assets
+- [x] Player sprite and gravity
+- [x] Voice-to-Movement mapping (Walk/Jump thresholds)
 
 ## Phase 5: Obstacles & Collision
 - [ ] Obstacle spawner
