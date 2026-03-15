@@ -25,6 +25,6 @@
 - [x] Game over state and score tracking
 
 ## Phase 6: PWA Polish & Scoring
-- [ ] Scoring system
-- [ ] PWA manifest finalization
-- [ ] Final build and verification
+- [x] Scoring system implementation and display
+- [x] PWA manifest finalization (Sunset Glow theme)
+- [x] Final build and verification (npm run build)

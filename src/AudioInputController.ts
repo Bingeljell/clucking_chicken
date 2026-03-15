@@ -29,7 +29,8 @@ export class AudioInputController {
   public getVolume(): number {
     if (!this.analyser || !this.dataArray) return 0;
 
-    this.analyser.getByteTimeDomainData(this.dataArray);
+    // Use type assertion to avoid TS2345: Uint8Array<ArrayBufferLike> vs Uint8Array<ArrayBuffer>
+    this.analyser.getByteTimeDomainData(this.dataArray as any);
 
     let sum = 0;
     for (let i = 0; i < this.dataArray.length; i++) {

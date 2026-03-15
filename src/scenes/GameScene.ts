@@ -1,5 +1,4 @@
 import Phaser from 'phaser';
-import { audioController } from '../AudioInputController';
 
 export class GameScene extends Phaser.Scene {
   private player!: Phaser.GameObjects.Rectangle;
@@ -67,7 +66,7 @@ export class GameScene extends Phaser.Scene {
 
     // Cleanup old obstacles
     this.obstacles.getChildren().forEach((child) => {
-      const obstacle = child as Phaser.Physics.Arcade.Body;
+      const obstacle = child as any;
       if (obstacle.x < -50) {
         this.obstacles.remove(child, true, true);
       }
@@ -85,6 +84,8 @@ export class GameScene extends Phaser.Scene {
   }
 
   private handleGameOver() {
-    this.scene.start('GameOverScene');
+    this.scene.start('GameOverScene', { score: Math.floor(this.score / 10) });
   }
 }
+
+import { audioController } from '../AudioInputController';
