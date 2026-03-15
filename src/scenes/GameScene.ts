@@ -15,9 +15,10 @@ export class GameScene extends Phaser.Scene {
   private bgMountains!: Phaser.GameObjects.TileSprite;
 
   // Audio settings from controller
-  private walkThreshold = 0.03;
-  private jumpThreshold = 0.12;
-  private readonly MAX_VOLUME = 0.4;
+  private noiseFloor = 0.02;
+  private walkThreshold = 0.08;
+  private jumpThreshold = 0.25;
+  private readonly MAX_VOLUME = 1.0; // Normalized max
   
   // Movement Constants
   private readonly HORIZONTAL_SPEED = 250;
@@ -60,10 +61,11 @@ export class GameScene extends Phaser.Scene {
     this.score = 0;
     this.isDead = false;
 
-    // Get calibrated thresholds
-    const thresholds = audioController.getThresholds();
-    this.walkThreshold = thresholds.walk;
-    this.jumpThreshold = thresholds.jump;
+    // Get calibrated/manual thresholds
+    const settings = audioController.getThresholds();
+    this.noiseFloor = settings.noise;
+    this.walkThreshold = settings.walk;
+    this.jumpThreshold = settings.jump;
 
     this.physics.world.setBounds(0, 0, worldWidth, height);
     this.cameras.main.setBounds(0, 0, worldWidth, height);
@@ -142,14 +144,16 @@ export class GameScene extends Phaser.Scene {
     if (this.isDead) return;
 
     const volume = audioController.getVolume();
-    this.volumeText.setText(`Vol: ${volume.toFixed(4)}`);
+    this.volumeText.setText(`Vol: ${volume.toFixed(2)}`);
 
     this.bgClouds.tilePositionX = this.cameras.main.scrollX * 0.1;
     this.bgMountains.tilePositionX = this.cameras.main.scrollX * 0.3;
 
     this.player.setVelocityX(0);
 
+    // Logic for walking and jumping with noise floor and manual thresholds
     if (volume > this.jumpThreshold && this.player.body?.blocked.down) {
+      // Scale jump based on how much volume is above the threshold
       const range = this.MAX_VOLUME - this.jumpThreshold;
       const normalizedVolume = Math.min(Math.max((volume - this.jumpThreshold) / range, 0), 1);
       const jumpForce = this.MIN_JUMP_FORCE + (this.MAX_JUMP_FORCE - this.MIN_JUMP_FORCE) * normalizedVolume;
@@ -169,6 +173,8 @@ export class GameScene extends Phaser.Scene {
         this.scoreText.setText(`Score: ${this.score}`);
       }
     } else {
+        // Only idle if we are below the walk threshold but above the noise floor
+        // or just generally below walk threshold.
         if (this.player.body?.blocked.down) {
             this.player.play('idle', true);
         }
