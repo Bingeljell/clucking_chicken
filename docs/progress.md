@@ -20,9 +20,9 @@
 - [x] Voice-to-Movement mapping (Walk/Jump thresholds)
 
 ## Phase 5: Obstacles & Collision
-- [ ] Obstacle spawner
-- [ ] Collision detection
-- [ ] Game over state
+- [x] Obstacle spawner (timed randomization)
+- [x] Collision detection between player and obstacles
+- [x] Game over state and score tracking
 
 ## Phase 6: PWA Polish & Scoring
 - [ ] Scoring system
