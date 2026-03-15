@@ -83,12 +83,14 @@ export class GameScene extends Phaser.Scene {
   }
 
   private addPlatform(x: number, y: number, width: number) {
-    const platform = this.add.rectangle(x + width / 2, y, width, 40, 0xFDF6E3);
+    // Using Burgundy (#8E2800) for platforms to be visible against Sand background
+    const platform = this.add.rectangle(x + width / 2, y, width, 40, 0x8E2800);
     this.platforms.add(platform);
   }
 
   private addHazard(x: number, y: number) {
-    const hazard = this.add.rectangle(x, y, 30, 30, 0x8E2800);
+    // Using Peach (#FAD0C4) for hazards
+    const hazard = this.add.rectangle(x, y, 30, 30, 0xFAD0C4);
     this.hazards.add(hazard);
   }
 
