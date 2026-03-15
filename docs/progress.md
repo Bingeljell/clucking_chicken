@@ -11,8 +11,8 @@
 - [x] Scaffolding Start, Game, and GameOver scenes
 
 ## Phase 3: Audio Input Module
-- [ ] Implement AudioInputController
-- [ ] Microphone access request flow
+- [x] Implement AudioInputController
+- [x] Microphone access request flow
 
 ## Phase 4: Core Game Loop - Movement & Physics
 - [ ] Placeholder assets
