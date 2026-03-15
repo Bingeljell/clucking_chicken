@@ -1,18 +1,23 @@
 import Phaser from 'phaser';
+import { audioController } from '../AudioInputController';
 
 export class GameScene extends Phaser.Scene {
   private player!: Phaser.GameObjects.Rectangle;
-  private obstacles!: Phaser.Physics.Arcade.Group;
+  private platforms!: Phaser.Physics.Arcade.StaticGroup;
+  private hazards!: Phaser.Physics.Arcade.StaticGroup;
   private volumeText!: Phaser.GameObjects.Text;
   private scoreText!: Phaser.GameObjects.Text;
   private score = 0;
-  private nextObstacleTime = 0;
   
   // Audio Thresholds
   private readonly WALK_THRESHOLD = 0.05;
   private readonly JUMP_THRESHOLD = 0.15;
-  private readonly HORIZONTAL_SPEED = 150;
-  private readonly JUMP_FORCE = -400;
+  private readonly MAX_VOLUME = 0.6; // Cap for volume mapping
+  
+  // Movement Constants
+  private readonly HORIZONTAL_SPEED = 200;
+  private readonly MIN_JUMP_FORCE = -350;
+  private readonly MAX_JUMP_FORCE = -850;
 
   constructor() {
     super('GameScene');
@@ -20,72 +25,108 @@ export class GameScene extends Phaser.Scene {
 
   create() {
     this.score = 0;
-    this.add.text(16, 16, 'Game Started', { fontSize: '24px', color: '#8E2800' });
-    this.volumeText = this.add.text(16, 50, 'Volume: 0', { fontSize: '18px', color: '#8E2800' });
-    this.scoreText = this.add.text(16, 80, 'Score: 0', { fontSize: '24px', color: '#8E2800' });
+    const worldWidth = 3000;
+    const worldHeight = 600;
+
+    // Set world and camera bounds
+    this.physics.world.setBounds(0, 0, worldWidth, worldHeight);
+    this.cameras.main.setBounds(0, 0, worldWidth, worldHeight);
+
+    // Background / Lava (Sunset Glow: Burgundy #8E2800)
+    this.add.rectangle(worldWidth / 2, 590, worldWidth, 20, 0x8E2800).setOrigin(0.5);
+
+    this.volumeText = this.add.text(16, 50, 'Volume: 0', { fontSize: '18px', color: '#8E2800' }).setScrollFactor(0);
+    this.scoreText = this.add.text(16, 80, 'Score: 0', { fontSize: '24px', color: '#8E2800' }).setScrollFactor(0);
     
-    // Placeholder for Chicken (Sunset Glow: Terracotta #E27D60)
-    this.player = this.add.rectangle(100, 300, 40, 40, 0xE27D60);
+    // Platforms Group (Sunset Glow: Sand #FDF6E3)
+    this.platforms = this.physics.add.staticGroup();
+    this.createLevel(worldWidth);
+
+    // Player (Chicken) (Sunset Glow: Terracotta #E27D60)
+    this.player = this.add.rectangle(100, 450, 40, 40, 0xE27D60);
     this.physics.add.existing(this.player);
     const body = this.player.body as Phaser.Physics.Arcade.Body;
     body.setCollideWorldBounds(true);
-    body.setGravityY(800);
+    body.setGravityY(1200); // Higher gravity for snappier platforming
 
-    // Placeholder floor (Sunset Glow: Sand #FDF6E3)
-    const floor = this.add.rectangle(400, 580, 800, 40, 0xFDF6E3);
-    this.physics.add.existing(floor, true);
-    this.physics.add.collider(this.player, floor);
+    this.physics.add.collider(this.player, this.platforms);
 
-    // Obstacles Group
-    this.obstacles = this.physics.add.group();
-    this.physics.add.collider(this.player, this.obstacles, this.handleGameOver, undefined, this);
+    // Hazards (Sunset Glow: Burgundy #8E2800)
+    this.hazards = this.physics.add.staticGroup();
+    this.physics.add.collider(this.player, this.hazards, this.handleGameOver, undefined, this);
 
-    this.nextObstacleTime = this.time.now + 2000;
+    // Camera follow
+    this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
   }
 
-  update(time: number) {
+  private createLevel(worldWidth: number) {
+    // Starting platform
+    this.addPlatform(0, 500, 400);
+
+    // Sequence of platforms and gaps
+    this.addPlatform(550, 500, 200);
+    this.addPlatform(850, 400, 200); // Step up
+    this.addPlatform(1150, 400, 300);
+    
+    // Add a hazard on this platform
+    this.addHazard(1300, 370);
+
+    this.addPlatform(1550, 300, 200); // Step up again
+    this.addPlatform(1850, 500, 400); // Big drop
+    
+    this.addPlatform(2350, 400, 300);
+    this.addHazard(2450, 370);
+    this.addHazard(2550, 370);
+
+    this.addPlatform(2750, 500, 500); // Final stretch
+  }
+
+  private addPlatform(x: number, y: number, width: number) {
+    const platform = this.add.rectangle(x + width / 2, y, width, 40, 0xFDF6E3);
+    this.platforms.add(platform);
+  }
+
+  private addHazard(x: number, y: number) {
+    const hazard = this.add.rectangle(x, y, 30, 30, 0x8E2800);
+    this.hazards.add(hazard);
+  }
+
+  update() {
     const volume = audioController.getVolume();
     this.volumeText.setText(`Volume: ${volume.toFixed(4)}`);
 
     const body = this.player.body as Phaser.Physics.Arcade.Body;
     body.setVelocityX(0);
 
+    // Logic for walking and jumping
     if (volume > this.JUMP_THRESHOLD && body.blocked.down) {
-      body.setVelocityY(this.JUMP_FORCE);
+      // Dynamic Jump Scaling
+      const range = this.MAX_VOLUME - this.JUMP_THRESHOLD;
+      const normalizedVolume = Math.min(Math.max((volume - this.JUMP_THRESHOLD) / range, 0), 1);
+      
+      // Map to jump force range: louder = stronger
+      const jumpForce = this.MIN_JUMP_FORCE + (this.MAX_JUMP_FORCE - this.MIN_JUMP_FORCE) * normalizedVolume;
+      body.setVelocityY(jumpForce);
     } else if (volume > this.WALK_THRESHOLD) {
       body.setVelocityX(this.HORIZONTAL_SPEED);
-      this.score += 1;
-      this.scoreText.setText(`Score: ${Math.floor(this.score / 10)}`);
+      
+      // Update score based on X position progression
+      const currentScore = Math.floor(this.player.x / 10);
+      if (currentScore > this.score) {
+        this.score = currentScore;
+        this.scoreText.setText(`Score: ${this.score}`);
+      }
+    }
+
+    // Fall to Death (Lava Check)
+    if (this.player.y > 570) {
+      this.handleGameOver();
     }
     
-    // Obstacle Spawning
-    if (time > this.nextObstacleTime) {
-      this.spawnObstacle();
-      this.nextObstacleTime = time + Phaser.Math.Between(1500, 3000);
-    }
-
-    // Cleanup old obstacles
-    this.obstacles.getChildren().forEach((child) => {
-      const obstacle = child as any;
-      if (obstacle.x < -50) {
-        this.obstacles.remove(child, true, true);
-      }
-    });
-
     audioController.resume();
   }
 
-  private spawnObstacle() {
-    const x = 850;
-    const y = 540; // Just above the floor
-    const obstacle = this.add.rectangle(x, y, 40, 40, 0x8E2800); // Burgundy
-    this.obstacles.add(obstacle);
-    (obstacle.body as Phaser.Physics.Arcade.Body).setVelocityX(-200);
-  }
-
   private handleGameOver() {
-    this.scene.start('GameOverScene', { score: Math.floor(this.score / 10) });
+    this.scene.start('GameOverScene', { score: this.score });
   }
 }
-
-import { audioController } from '../AudioInputController';
