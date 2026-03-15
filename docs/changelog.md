@@ -7,3 +7,4 @@
 - **2026-03-15** > src/scenes/GameScene.ts > Added obstacle spawning system with random timing. Implemented collision detection between player and obstacles leading to Game Over state. Added basic score tracking based on horizontal movement.
 - **2026-03-15** > src/scenes/{GameScene.ts, GameOverScene.ts}, vite.config.ts > Finalized scoring system and score passing between scenes. Polished PWA manifest with "Sunset Glow" theme colors. Verified build compilation.
 - **2026-03-15** > src/scenes/GameScene.ts > Migrated from scrolling scene to a platformer-style level with platforms, gaps, and a "Lava" death zone. Implemented dynamic jump scaling where the jump force is proportional to the microphone volume spike. Added camera follow system to support long levels.
+- **2026-03-15** > src/scenes/GameScene.ts > Fixed initialization order bug where hazards were being added to an undefined group during level creation.

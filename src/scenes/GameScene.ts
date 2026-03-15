@@ -38,8 +38,11 @@ export class GameScene extends Phaser.Scene {
     this.volumeText = this.add.text(16, 50, 'Volume: 0', { fontSize: '18px', color: '#8E2800' }).setScrollFactor(0);
     this.scoreText = this.add.text(16, 80, 'Score: 0', { fontSize: '24px', color: '#8E2800' }).setScrollFactor(0);
     
-    // Platforms Group (Sunset Glow: Sand #FDF6E3)
+    // Groups for collision
     this.platforms = this.physics.add.staticGroup();
+    this.hazards = this.physics.add.staticGroup();
+
+    // Create level content
     this.createLevel(worldWidth);
 
     // Player (Chicken) (Sunset Glow: Terracotta #E27D60)
@@ -49,10 +52,8 @@ export class GameScene extends Phaser.Scene {
     body.setCollideWorldBounds(true);
     body.setGravityY(1200); // Higher gravity for snappier platforming
 
+    // Colliders
     this.physics.add.collider(this.player, this.platforms);
-
-    // Hazards (Sunset Glow: Burgundy #8E2800)
-    this.hazards = this.physics.add.staticGroup();
     this.physics.add.collider(this.player, this.hazards, this.handleGameOver, undefined, this);
 
     // Camera follow
