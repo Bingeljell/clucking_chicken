@@ -22,8 +22,8 @@ const config: Phaser.Types.Core.GameConfig = {
   },
   scene: [StartScene, GameScene, GameOverScene],
   parent: 'app',
-  backgroundColor: '#FDF6E3',
-  pixelArt: true // Ensures pixel art stays crisp
+  backgroundColor: '#0B190E', // Dark Jungle Green
+  pixelArt: true
 };
 
 new Phaser.Game(config);

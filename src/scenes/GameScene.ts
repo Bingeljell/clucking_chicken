@@ -10,17 +10,14 @@ export class GameScene extends Phaser.Scene {
   private score = 0;
   private isDead = false;
   
-  // Parallax layers
   private bgClouds!: Phaser.GameObjects.TileSprite;
   private bgMountains!: Phaser.GameObjects.TileSprite;
 
-  // Audio settings from controller
   private noiseFloor = 0.02;
   private walkThreshold = 0.08;
   private jumpThreshold = 0.25;
-  private readonly MAX_VOLUME = 1.0; // Normalized max
+  private readonly MAX_VOLUME = 1.0;
   
-  // Movement Constants
   private readonly HORIZONTAL_SPEED = 250;
   private readonly MIN_JUMP_FORCE = -400;
   private readonly MAX_JUMP_FORCE = -950;
@@ -30,27 +27,24 @@ export class GameScene extends Phaser.Scene {
   }
 
   preload() {
-    this.load.spritesheet('frog', 'assets/images/frog_sheet.png', { 
-        frameWidth: 32, 
-        frameHeight: 32 
-    });
+    this.load.spritesheet('frog', 'assets/images/frog_sheet.png', { frameWidth: 32, frameHeight: 32 });
     this.load.audio('jump_sfx', 'assets/audio/jump.wav');
     this.load.audio('death_sfx', 'assets/audio/death.wav');
-    
-    this.load.on('complete', () => {
-      this.generateFallbackTextures();
-    });
+    this.load.on('complete', () => { this.generateFallbackTextures(); });
   }
 
   private generateFallbackTextures() {
     const graphics = this.make.graphics({ x: 0, y: 0, add: false });
-    graphics.fillStyle(0xFAD0C4, 0.5);
-    graphics.fillCircle(50, 50, 40);
-    graphics.fillCircle(80, 50, 30);
+    
+    // Jungle Canopy (Clouds replacement) - Darker Green
+    graphics.fillStyle(0x1A330B, 0.5); 
+    graphics.fillCircle(50, 50, 60);
+    graphics.fillCircle(100, 40, 50);
     graphics.generateTexture('bg_clouds', 128, 128);
     graphics.clear();
 
-    graphics.fillStyle(0xE27D60, 0.8);
+    // Jungle Trees (Mountains replacement) - Forest Green
+    graphics.fillStyle(0x2D5A27, 0.8);
     graphics.fillTriangle(0, 128, 64, 0, 128, 128);
     graphics.generateTexture('bg_mountains', 128, 128);
   }
@@ -61,7 +55,6 @@ export class GameScene extends Phaser.Scene {
     this.score = 0;
     this.isDead = false;
 
-    // Get calibrated/manual thresholds
     const settings = audioController.getThresholds();
     this.noiseFloor = settings.noise;
     this.walkThreshold = settings.walk;
@@ -70,27 +63,19 @@ export class GameScene extends Phaser.Scene {
     this.physics.world.setBounds(0, 0, worldWidth, height);
     this.cameras.main.setBounds(0, 0, worldWidth, height);
 
-    this.bgClouds = this.add.tileSprite(0, 0, width, height, 'bg_clouds')
-        .setOrigin(0).setScrollFactor(0).setAlpha(0.3);
-    this.bgMountains = this.add.tileSprite(0, height - 128, width, 128, 'bg_mountains')
-        .setOrigin(0).setScrollFactor(0).setAlpha(0.5);
+    this.bgClouds = this.add.tileSprite(0, 0, width, height, 'bg_clouds').setOrigin(0).setScrollFactor(0).setAlpha(0.2);
+    this.bgMountains = this.add.tileSprite(0, height - 200, width, 200, 'bg_mountains').setOrigin(0).setScrollFactor(0).setAlpha(0.4);
 
+    // Deep Jungle Water/Mud (Instead of Lava) - Dark Swamp Green
     const lavaHeight = 40;
-    this.add.rectangle(worldWidth / 2, height - lavaHeight / 2, worldWidth, lavaHeight, 0x8E2800).setOrigin(0.5);
+    this.add.rectangle(worldWidth / 2, height - lavaHeight / 2, worldWidth, lavaHeight, 0x051108).setOrigin(0.5);
 
-    // UI
-    this.volumeText = this.add.text(16, 16, 'Vol: 0', { fontSize: '18px', color: '#8E2800' }).setScrollFactor(0);
-    this.scoreText = this.add.text(16, 46, 'Score: 0', { fontSize: '24px', color: '#8E2800' }).setScrollFactor(0);
+    this.volumeText = this.add.text(16, 16, 'Vol: 0', { fontSize: '18px', color: '#7FFF00' }).setScrollFactor(0);
+    this.scoreText = this.add.text(16, 46, 'Score: 0', { fontSize: '24px', color: '#7FFF00' }).setScrollFactor(0);
     
-    // Menu/Settings Button (Top Right)
-    const menuBtn = this.add.rectangle(width - 60, 30, 80, 40, 0xE27D60)
-        .setScrollFactor(0).setInteractive({ useHandCursor: true });
-    this.add.text(width - 60, 30, 'MENU', { fontSize: '18px', color: '#FDF6E3', fontStyle: 'bold' })
-        .setScrollFactor(0).setOrigin(0.5);
-
-    menuBtn.on('pointerdown', () => {
-        this.scene.start('StartScene');
-    });
+    const menuBtn = this.add.rectangle(width - 60, 30, 80, 40, 0x2D5A27).setScrollFactor(0).setInteractive({ useHandCursor: true });
+    this.add.text(width - 60, 30, 'MENU', { fontSize: '18px', color: '#FDF6E3', fontStyle: 'bold' }).setScrollFactor(0).setOrigin(0.5);
+    menuBtn.on('pointerdown', () => { this.scene.start('StartScene'); });
 
     this.platforms = this.physics.add.staticGroup();
     this.hazards = this.physics.add.staticGroup();
@@ -131,76 +116,54 @@ export class GameScene extends Phaser.Scene {
   }
 
   private addPlatform(x: number, y: number, width: number) {
-    const platform = this.add.rectangle(x + width / 2, y, width, 40, 0x8E2800);
+    // Tree Bark Brown
+    const platform = this.add.rectangle(x + width / 2, y, width, 40, 0x3E2723);
     this.platforms.add(platform);
   }
 
   private addHazard(x: number, y: number) {
-    const hazard = this.add.rectangle(x, y, 30, 30, 0xFAD0C4);
+    // Sharp Jungle Vine / Insect (Vibrant Orange/Red)
+    const hazard = this.add.rectangle(x, y, 30, 30, 0xFF4500);
     this.hazards.add(hazard);
   }
 
   update() {
     if (this.isDead) return;
-
     const volume = audioController.getVolume();
     this.volumeText.setText(`Vol: ${volume.toFixed(2)}`);
-
     this.bgClouds.tilePositionX = this.cameras.main.scrollX * 0.1;
     this.bgMountains.tilePositionX = this.cameras.main.scrollX * 0.3;
-
     this.player.setVelocityX(0);
 
-    // Logic for walking and jumping with noise floor and manual thresholds
     if (volume > this.jumpThreshold && this.player.body?.blocked.down) {
-      // Scale jump based on how much volume is above the threshold
       const range = this.MAX_VOLUME - this.jumpThreshold;
       const normalizedVolume = Math.min(Math.max((volume - this.jumpThreshold) / range, 0), 1);
       const jumpForce = this.MIN_JUMP_FORCE + (this.MAX_JUMP_FORCE - this.MIN_JUMP_FORCE) * normalizedVolume;
-      
       this.player.setVelocityY(jumpForce);
       this.player.play('jump', true);
       this.sound.play('jump_sfx', { volume: 0.5 });
     } else if (volume > this.walkThreshold) {
       this.player.setVelocityX(this.HORIZONTAL_SPEED);
-      if (this.player.body?.blocked.down) {
-        this.player.play('walk', true);
-      }
-      
+      if (this.player.body?.blocked.down) { this.player.play('walk', true); }
       const currentScore = Math.floor(this.player.x / 10);
       if (currentScore > this.score) {
         this.score = currentScore;
         this.scoreText.setText(`Score: ${this.score}`);
       }
     } else {
-        // Only idle if we are below the walk threshold but above the noise floor
-        // or just generally below walk threshold.
-        if (this.player.body?.blocked.down) {
-            this.player.play('idle', true);
-        }
+        if (this.player.body?.blocked.down) { this.player.play('idle', true); }
     }
-
-    if (this.player.y > this.scale.height - 50) {
-      this.handleGameOver();
-    }
-    
+    if (this.player.y > this.scale.height - 50) { this.handleGameOver(); }
     audioController.resume();
   }
 
   private handleGameOver() {
     if (this.isDead) return;
     this.isDead = true;
-    
-    if (this.player.body) {
-        this.player.body.enable = false;
-    }
-    
+    if (this.player.body) { this.player.body.enable = false; }
     this.player.setVelocity(0, 0);
     this.player.play('die', true);
     this.sound.play('death_sfx', { volume: 0.6 });
-    
-    this.time.delayedCall(800, () => {
-        this.scene.start('GameOverScene', { score: this.score });
-    });
+    this.time.delayedCall(800, () => { this.scene.start('GameOverScene', { score: this.score }); });
   }
 }
