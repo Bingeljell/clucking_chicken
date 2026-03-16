@@ -22,31 +22,31 @@ export class GameOverScene extends Phaser.Scene {
     const { width, height } = this.scale;
     const highScore = localStorage.getItem('clucking_high_score') || '0';
     
-    // Background
-    this.add.rectangle(width / 2, height / 2, width, height, 0x8E2800);
+    // Background - Dark Jungle Green
+    this.add.rectangle(width / 2, height / 2, width, height, 0x0B190E);
 
     this.add.text(width / 2, height * 0.25, 'GAME OVER', { 
       fontSize: '64px', 
-      color: '#FAD0C4',
+      color: '#FF4500', // Vibrant Hazard Orange
       fontStyle: 'bold'
     }).setOrigin(0.5);
 
     this.add.text(width / 2, height * 0.45, `SCORE: ${this.finalScore}`, { 
       fontSize: '40px', 
-      color: '#FDF6E3' 
+      color: '#7FFF00' // Lime Green
     }).setOrigin(0.5);
 
     this.add.text(width / 2, height * 0.55, `BEST: ${highScore}`, { 
       fontSize: '24px', 
-      color: '#E27D60' 
+      color: '#2D5A27' 
     }).setOrigin(0.5);
 
-    const restartBtn = this.add.rectangle(width / 2, height * 0.75, 250, 60, 0xE27D60)
+    const restartBtn = this.add.rectangle(width / 2, height * 0.75, 250, 60, 0x7FFF00)
       .setInteractive({ useHandCursor: true });
     
     this.add.text(width / 2, height * 0.75, 'RETRY', {
       fontSize: '32px',
-      color: '#FDF6E3',
+      color: '#0B190E',
       fontStyle: 'bold'
     }).setOrigin(0.5);
 
@@ -54,7 +54,7 @@ export class GameOverScene extends Phaser.Scene {
       this.scene.start('GameScene');
     });
 
-    restartBtn.on('pointerover', () => restartBtn.setFillStyle(0xFAD0C4));
-    restartBtn.on('pointerout', () => restartBtn.setFillStyle(0xE27D60));
+    restartBtn.on('pointerover', () => restartBtn.setFillStyle(0x2D5A27));
+    restartBtn.on('pointerout', () => restartBtn.setFillStyle(0x7FFF00));
   }
 }

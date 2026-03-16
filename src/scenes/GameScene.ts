@@ -28,25 +28,9 @@ export class GameScene extends Phaser.Scene {
 
   preload() {
     this.load.spritesheet('frog', 'assets/images/frog_sheet.png', { frameWidth: 32, frameHeight: 32 });
+    this.load.image('jungle_env', 'assets/images/jungle_env.png');
     this.load.audio('jump_sfx', 'assets/audio/jump.wav');
     this.load.audio('death_sfx', 'assets/audio/death.wav');
-    this.load.on('complete', () => { this.generateFallbackTextures(); });
-  }
-
-  private generateFallbackTextures() {
-    const graphics = this.make.graphics({ x: 0, y: 0, add: false });
-    
-    // Jungle Canopy (Clouds replacement) - Darker Green
-    graphics.fillStyle(0x1A330B, 0.5); 
-    graphics.fillCircle(50, 50, 60);
-    graphics.fillCircle(100, 40, 50);
-    graphics.generateTexture('bg_clouds', 128, 128);
-    graphics.clear();
-
-    // Jungle Trees (Mountains replacement) - Forest Green
-    graphics.fillStyle(0x2D5A27, 0.8);
-    graphics.fillTriangle(0, 128, 64, 0, 128, 128);
-    graphics.generateTexture('bg_mountains', 128, 128);
   }
 
   create() {
@@ -54,6 +38,16 @@ export class GameScene extends Phaser.Scene {
     const worldWidth = 6000;
     this.score = 0;
     this.isDead = false;
+
+    // Define frames from the environment sheet
+    const envTexture = this.textures.get('jungle_env');
+    if (envTexture) {
+        envTexture.add('ground', 0, 0, 0, 256, 128);
+        envTexture.add('log', 0, 256, 128, 512, 96);
+        envTexture.add('cactus', 0, 0, 224, 128, 128);
+        envTexture.add('bg_sunset', 0, 0, 320, 1024, 128);
+        envTexture.add('bg_green', 0, 0, 448, 1024, 128);
+    }
 
     const settings = audioController.getThresholds();
     this.noiseFloor = settings.noise;
@@ -63,12 +57,15 @@ export class GameScene extends Phaser.Scene {
     this.physics.world.setBounds(0, 0, worldWidth, height);
     this.cameras.main.setBounds(0, 0, worldWidth, height);
 
-    this.bgClouds = this.add.tileSprite(0, 0, width, height, 'bg_clouds').setOrigin(0).setScrollFactor(0).setAlpha(0.2);
-    this.bgMountains = this.add.tileSprite(0, height - 200, width, 200, 'bg_mountains').setOrigin(0).setScrollFactor(0).setAlpha(0.4);
+    // Parallax Backgrounds using the real art
+    this.bgClouds = this.add.tileSprite(0, height / 2 - 100, width, 128, 'jungle_env', 'bg_sunset')
+        .setOrigin(0).setScrollFactor(0).setAlpha(0.8).setScale(width / 1024 * 2);
+    
+    this.bgMountains = this.add.tileSprite(0, height - 256, width, 128, 'jungle_env', 'bg_green')
+        .setOrigin(0).setScrollFactor(0).setAlpha(0.9).setScale(width / 1024 * 2);
 
-    // Deep Jungle Water/Mud (Instead of Lava) - Dark Swamp Green
-    const lavaHeight = 40;
-    this.add.rectangle(worldWidth / 2, height - lavaHeight / 2, worldWidth, lavaHeight, 0x051108).setOrigin(0.5);
+    // Swamp Water at the bottom
+    this.add.rectangle(worldWidth / 2, height - 10, worldWidth, 20, 0x051108).setOrigin(0.5);
 
     this.volumeText = this.add.text(16, 16, 'Vol: 0', { fontSize: '18px', color: '#7FFF00' }).setScrollFactor(0);
     this.scoreText = this.add.text(16, 46, 'Score: 0', { fontSize: '24px', color: '#7FFF00' }).setScrollFactor(0);
@@ -82,6 +79,7 @@ export class GameScene extends Phaser.Scene {
 
     this.createLevel(worldWidth, height);
 
+    // Animations
     if (!this.anims.exists('idle')) {
         this.anims.create({ key: 'idle', frames: this.anims.generateFrameNumbers('frog', { start: 0, end: 1 }), frameRate: 4, repeat: -1 });
         this.anims.create({ key: 'walk', frames: this.anims.generateFrameNumbers('frog', { start: 4, end: 7 }), frameRate: 10, repeat: -1 });
@@ -109,30 +107,50 @@ export class GameScene extends Phaser.Scene {
         const platY = isFirst ? floorY : floorY - Phaser.Math.Between(-50, 150);
         this.addPlatform(x, platY, platWidth);
         if (!isFirst && x > 500 && Phaser.Math.Between(0, 10) > 6) {
-            this.addHazard(x + platWidth / 2, platY - 30);
+            this.addHazard(x + platWidth / 2, platY - 60);
         }
-        x += platWidth + Phaser.Math.Between(100, 200);
+        x += platWidth + Phaser.Math.Between(150, 250);
     }
   }
 
   private addPlatform(x: number, y: number, width: number) {
-    // Tree Bark Brown
-    const platform = this.add.rectangle(x + width / 2, y, width, 40, 0x3E2723);
+    // Determine if it's a ground block or a floating log
+    const isFloating = y < this.scale.height - 200;
+    const texture = isFloating ? 'log' : 'ground';
+    
+    // We use a TileSprite for ground to repeat the texture, or a simple image for logs
+    let platform;
+    if (!isFloating) {
+        platform = this.add.tileSprite(x + width / 2, y, width, 128, 'jungle_env', 'ground');
+        platform.setDisplaySize(width, 128);
+    } else {
+        platform = this.add.image(x + width / 2, y, 'jungle_env', 'log');
+        platform.setDisplaySize(width, 60);
+    }
+    
     this.platforms.add(platform);
+    // Adjust physics body size
+    const body = platform.body as Phaser.Physics.Arcade.StaticBody;
+    body.updateFromGameObject();
   }
 
   private addHazard(x: number, y: number) {
-    // Sharp Jungle Vine / Insect (Vibrant Orange/Red)
-    const hazard = this.add.rectangle(x, y, 30, 30, 0xFF4500);
+    const hazard = this.add.image(x, y, 'jungle_env', 'cactus');
+    hazard.setScale(0.5); // The cactus is quite large in the sheet
     this.hazards.add(hazard);
+    const body = hazard.body as Phaser.Physics.Arcade.StaticBody;
+    body.updateFromGameObject();
   }
 
   update() {
     if (this.isDead) return;
     const volume = audioController.getVolume();
     this.volumeText.setText(`Vol: ${volume.toFixed(2)}`);
+
+    // Dynamic Parallax
     this.bgClouds.tilePositionX = this.cameras.main.scrollX * 0.1;
     this.bgMountains.tilePositionX = this.cameras.main.scrollX * 0.3;
+
     this.player.setVelocityX(0);
 
     if (volume > this.jumpThreshold && this.player.body?.blocked.down) {
