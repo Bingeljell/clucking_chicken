@@ -1,0 +1,22 @@
+Row,Column (0-15),Group,Sprite Description,Function
+R1-2,0-3,Ground,"Top-Left Corner, Top-Repeat Moss, Top-Repeat Grass, Top-Right Corner",Repeatable surface.
+R1-2,4-7,Ground,"Left-Edge Soil, Inner Soil/Root Block, Inner Soil/Root Block (Variation), Right-Edge Soil",Textured core layer of the ground.
+R3,0-1,Lava,Lava Surface Repeat Middle (Fiery Top),Repeats for the surface of the lava.
+R3,2-3,Lava,Lava Inner Repeat (Molten/Debris),Repeats for the core molten core.
+R4,0-1,Mid-Air,"Lily Pad (Small Repeat Middle), Lily Pad (Large Repeat Middle)",Repeatable main platform.
+R4,2-3,Mid-Air,Lily Pad Left/Right End (Symmetric),Caps for lily pad platforms.
+R4,4-5,Mid-Air,"Floating Log Mossy Middle Repeat, Floating Log End Piece",Alternate platform style.
+R5,0-1,Hazards (Level),Hanging Thorny Vine with Large Seed Pod,Obstacle that hangs down.
+R5,2,Hazards (Level),Ground Thorns/Briars,Floor-level damage.
+R5,3,Hazards (Level),Sharpened Bamboo Ground Spike,Another floor-level hazard.
+R5,4,Hazards (Level),Toxic flowering jungle plant,Ground hazard/projectile placeholder.
+R6,0-1,Creatures (Helpful),"Colorful Parrot/Macaw (Static pose, cheering)",Visual encouragement.
+R6,2-3,Creatures (Helpful),Capuchin Monkey (Waving pose),Visual encouragement.
+R6,4,Creatures (Helpful),Helper Ant carrying encouragement sign,Whimsical encouragement.
+R7,0-1,Creatures (Hostile),"Slithering Cobra (Coiled, head up)",Basic ground enemy.
+R7,2,Creatures (Hostile),"Scorpion (Tail up, ready)",Another ground enemy.
+R7,3,Creatures (Hostile),Piranha (Mid-jump from Lava/Sludge),Special lava-jumping hazard.
+R7,4,Creatures (Hostile),Large Spider (Hanging from silk thread pose),Hanging enemy/hazard.
+R8,0-1,Background Env,Giant Monstera Leaf,Static atmosphere element.
+R8,2-3,Background Env,Long Hanging Jungle Vine (Non-hazardous),Static atmosphere element.
+R8,4-5,Background Env,"Distant Jungle Tree Trunk Piece, Jungle Haze Silhouette Mountains",Atmosphere/parallax layers.
